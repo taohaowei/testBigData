@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+    <!-- 设置动作启用定时任务 -->
+    <task:annotation-driven/>
+    <!-- 结束 设置动作启用定时任务 -->
+
+    <!-- 自动扫描、并注入对象 -->
+    <context:component-scan base-package="dao"/>
+    <!-- 结束 自动扫描、并注入对象 -->
+
+    <!-- 引入jdbc配置文件 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!-- 结束 引入jdbc配置文件 -->
+
+    <!-- 创建jdbc数据源 -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${driverClassName}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="url" value="${url}"/>
+        <!-- 初始化连接大小 -->
+        <property name="initialSize" value="${initialSize}"></property>
+        <!-- 连接池最大数量 -->
+        <property name="maxActive" value="${maxActive}"></property>
+        <!-- 连接池最大空闲 -->
+        <property name="maxIdle" value="${maxIdle}"></property>
+        <!-- 连接池最小空闲 -->
+        <property name="minIdle" value="${minIdle}"></property>
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait" value="${maxWait}"></property>
+    </bean>
+    <!-- 结束 创建jdbc数据源 -->
+
+    <!-- 配置MyBatis的sqlSession -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis.xml"/>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 结束 配置MyBatis的sqlSession -->
+
+    <!-- 映射Mapper目录 -->
+    <!-- Mapper配置文件的所在包名，Spring会自动查找其下的Mapper配置文件 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="dao"/>
+    </bean>
+    <!-- 结束 Mapper配置文件的所在包名，Spring会自动查找其下的Mapper配置文件 -->
+    <!-- 结束 映射Mapper目录 -->
+
+
+    <!-- 事务 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 结束 事务 -->
+
+    <!-- SpringMVC 完成 -->
+    <!-- SpringMVC 自动添加控制器层返还String类型的前缀和后缀-->
+    <mvc:annotation-driven/>
+    <bean id="internalResourceViewResolver"
+          class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+    <!-- 结束 SpringMVC 自动添加控制器层返还String类型的前缀和后缀-->
+
+    <!-- 配置拦截器 -->
+    <!--<mvc:interceptors>-->
+        <!--<mvc:interceptor>-->
+            <!--<mvc:mapping path="/*.action" />-->
+            <!--<mvc:mapping path="/*/*.action" />-->
+
+            <!--&lt;!&ndash;&lt;!&ndash; 需排除拦截的地址 &ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;&lt;!&ndash;这里的action，和拦截器类都是将要创建的，一开始会报错。创建一个登录拦截器就好。path里面指的映射控制器的地址&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;<mvc:exclude-mapping path="/login.action"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;<bean id="loginInterceptor" class="interceptor.LoginInterceptor" />&ndash;&gt;-->
+        <!--</mvc:interceptor>-->
+    <!--</mvc:interceptors>-->
+    <!-- 结束 配置拦截器 -->
+    <!-- 结束 SpringMVC -->
+
+    <!-- 多部分文件上传 -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="104857600" />
+        <property name="maxInMemorySize" value="4096" />
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
+    <!-- 结束 多部分文件上传 -->
+
+    <!-- 配置json数据 -->
+    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <ref bean="mappingJackson2HttpMessageConverter"/>
+            </list>
+        </property>
+    </bean>
+    <bean id="mappingJackson2HttpMessageConverter"
+          class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+        <property name="supportedMediaTypes">
+            <list>
+                <value>text/html;charset=UTF-8</value>
+                <value>text/json;charset=UTF-8</value>
+                <value>application/json;charset=UTF-8</value>
+            </list>
+        </property>
+    </bean>
+    <!-- 结束 配置json数据 -->
+
+</beans>
